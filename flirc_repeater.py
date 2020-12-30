@@ -15,6 +15,8 @@ from evdev import InputDevice
 
 # The key code is what the flirc sends as the USB input key press
 # If the code is in this dict, send the ir command for it
+# You can get the key codes from the following file, or just look at the program output when the flirc sends a key press
+# https://github.com/torvalds/linux/blob/master/include/uapi/linux/input-event-codes.h
 KEY_CODES = {
     # Keycode for PageUp - IR code is Vol Up for Topping
     '104': '0,8980,4429,580,532,557,528,557,532,553,1628,576,527,558,527,558,505,580,1646,531,1672,554,1645,558,1642,558,505,580,1619,584,1619,579,1646,557,527,558,527,558,1645,558,1615,584,531,553,532,553,531,558,1620,579,532,557,1641,558,532,553,532,532,1645,580,1619,585,1619,584,501,584,1641,584',
