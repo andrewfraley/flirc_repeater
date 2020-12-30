@@ -28,7 +28,7 @@ key_mgmt=WPA-PSK
 - If using a Raspberry Pi, go ahead and boot it up and wait a few minutes
     - ssh into it with pi@raspberrypi or pi@raspberrypi.local, pw is raspberrypi
 - Run (should work on any debian based distro): ```curl apt.flirc.tv/install.sh | sudo bash```
-- Select Yes when asked to install flirc utilities
+    - Select Yes when asked to install flirc utilities
 
 ### Setup Python
 - Install Python Pip: ```sudo apt install python3-pip```

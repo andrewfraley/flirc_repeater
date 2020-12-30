@@ -8,6 +8,7 @@
 import sys
 import subprocess
 import logging
+from subprocess import Popen
 from select import select
 from evdev import InputDevice
 
@@ -36,7 +37,8 @@ def main():
     """ MAIN """
     init_logger(debug=DEBUG)
     input_device = InputDevice(FLIRC_DEV_PATH)
-
+    flirc_util_process = Popen([FLIRC_UTIL_PATH, 'shell'], stdin=subprocess.PIPE)
+    logging.info('made it')
     while True:
         # Wait for something to happen
         r, w, x = select([input_device], [], [])
@@ -48,14 +50,15 @@ def main():
                 # Do we know about this key? If so send it
                 if key_code in KEY_CODES:
                     logging.info('Key code %s recognized, sending IR command', key_code)
-                    send_command(KEY_CODES[key_code])
+                    send_command(flirc_util_process, KEY_CODES[key_code])
 
 
-def send_command(cmd):
+def send_command(flirc_util_process, ir_cmd):
     """ Send the IR command """
-    os_cmd = FLIRC_CMD + cmd
-    logging.debug('os_cmd: %s', os_cmd)
-    subprocess.run(os_cmd.split(' '), check=True)
+    flirc_cmd = "sendir --ik=%s --repeat=%s --pattern=%s\n" % (FLIRC_IK, FLIRC_REPEAT, ir_cmd)
+    logging.debug('flirc_command: %s', flirc_cmd)
+    flirc_util_process.stdin.write(str.encode(flirc_cmd))
+    flirc_util_process.stdin.flush()
 
 
 def init_logger(debug=False):
