@@ -35,26 +35,20 @@ FLIRC_CMD = '%s sendir --ik=%s --repeat=%s --pattern=' % (FLIRC_UTIL_PATH, FLIRC
 def main():
     """ MAIN """
     init_logger(debug=DEBUG)
-    flirc_device = InputDevice(FLIRC_DEV_PATH)
+    input_device = InputDevice(FLIRC_DEV_PATH)
 
     while True:
         # Wait for something to happen
-        key_code = wait_for_press(flirc_device)
-        logging.info('Key code %s', key_code)
-
-        # Do we know about this key? If so send it
-        if key_code in KEY_CODES:
-            logging.info('Key code %s recognized, sending IR command', key_code)
-            send_command(KEY_CODES[key_code])
-
-
-def wait_for_press(input_device):
-    """ Wait for the flirc to respond to a signal and then return the code """
-    while True:
         r, w, x = select([input_device], [], [])
         for event in input_device.read():
             if event.type == 1 and event.value == 1:
-                return str(event.code)
+                key_code = str(event.code)
+                logging.info('Key code %s', key_code)
+
+                # Do we know about this key? If so send it
+                if key_code in KEY_CODES:
+                    logging.info('Key code %s recognized, sending IR command', key_code)
+                    send_command(KEY_CODES[key_code])
 
 
 def send_command(cmd):
