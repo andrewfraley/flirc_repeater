@@ -5,15 +5,16 @@
     This listens for the flirc to receive an IR signal and send its keypress
     We detect the keypress and then send our IR siginal
 """
-import sys
+# pylint: disable=line-too-long
+
 import subprocess
 import logging
 from subprocess import Popen
 from select import select
 from evdev import InputDevice
 
-# The key code is what the flirc sends as the USB key press
-# If we see one of these codes, send the ir command for it
+# The key code is what the flirc sends as the USB input key press
+# If the code is in this dict, send the ir command for it
 KEY_CODES = {
     # Keycode for PageUp - IR code is Vol Up for Topping
     '104': '0,8980,4429,580,532,557,528,557,532,553,1628,576,527,558,527,558,505,580,1646,531,1672,554,1645,558,1642,558,505,580,1619,584,1619,579,1646,557,527,558,527,558,1645,558,1615,584,531,553,532,553,531,558,1620,579,532,557,1641,558,532,553,532,532,1645,580,1619,585,1619,584,501,584,1641,584',
@@ -29,32 +30,39 @@ FLIRC_DEV_PATH = '/dev/input/by-id/usb-flirc.tv_flirc-if01-event-kbd'
 FLIRC_UTIL_PATH = r'flirc_util'
 # FLIRC_UTIL_PATH = r'C:\Program Files (x86)\Flirc\flirc_util.exe'  # In case you need to debug on Windows
 
-
 FLIRC_CMD = '%s sendir --ik=%s --repeat=%s --pattern=' % (FLIRC_UTIL_PATH, FLIRC_IK, FLIRC_REPEAT)
 
 
 def main():
-    """ MAIN """
+    """
+        We're going to spawn a "flirc_util shell" process and send it commands when we see the flirc responding to IR.
+        We'll watch the Flirc's USB input device for keypresses, and if we see one that matches our KEY_CODES dict,
+        we'll send the corresponding IR command with the "flirc_util shell" process.
+    """
     init_logger(debug=DEBUG)
     input_device = InputDevice(FLIRC_DEV_PATH)
     flirc_util_process = Popen([FLIRC_UTIL_PATH, 'shell'], stdin=subprocess.PIPE)
     logging.info('made it')
     while True:
-        # Wait for something to happen
-        r, w, x = select([input_device], [], [])
+        # How to read the input from a console connected USB keyboard (the flirc in our case) https://superuser.com/a/562519/659822
+        r, w, x = select([input_device], [], [])  # pylint: disable=unused-variable, invalid-name
         for event in input_device.read():
             if event.type == 1 and event.value == 1:
                 key_code = str(event.code)
                 logging.info('Key code %s', key_code)
 
-                # Do we know about this key? If so send it
+                # Do we know about this key? If so, send it.
                 if key_code in KEY_CODES:
                     logging.info('Key code %s recognized, sending IR command', key_code)
                     send_command(flirc_util_process, KEY_CODES[key_code])
 
 
 def send_command(flirc_util_process, ir_cmd):
-    """ Send the IR command """
+    """ Send the IR command
+        flirc_util_process is a subprocess we already opened by running "flirc_util shell".
+        We leave that open so we don't have to spawn a new process for every key press, which
+        seems to be noticeably faster on something slow like a Raspberry Pi Zero W
+    """
     flirc_cmd = "sendir --ik=%s --repeat=%s --pattern=%s\n" % (FLIRC_IK, FLIRC_REPEAT, ir_cmd)
     logging.debug('flirc_command: %s', flirc_cmd)
     flirc_util_process.stdin.write(str.encode(flirc_cmd))
