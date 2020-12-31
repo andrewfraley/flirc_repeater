@@ -18,11 +18,15 @@ rm -f /tmp/flirc_install.sh
 wget apt.flirc.tv/install.sh -O /tmp/flirc_install.sh
 chmod 754 /tmp/flirc_install.sh
 
+echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+echo "Running FLIRC install script, this may appear to hang for many minutes!!!"
+echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+
 expect <<END
     spawn /tmp/flirc_install.sh
-    expect "Do you want to install the flirc utilities"
-    send "y\r"
-    expect eof
+    expect "Y\n"
+    send "\r"
+    wait
 END
 
 # Get our source
