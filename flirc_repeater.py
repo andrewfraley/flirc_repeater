@@ -47,18 +47,19 @@ def main():
                 # Do we know about this key? If so, send it.
                 if key_code in key_codes:
                     logging.info('Key code %s recognized, sending IR command', key_code)
-                    send_command(flirc_util_process, key_codes[key_code], config)
+                    ir_code = key_codes[key_code]['ir_code']
+                    repeat = key_codes[key_code]['repeat']
+                    send_command(flirc_util_process, config=config, ir_code=ir_code, repeat=repeat)
 
 
-def send_command(flirc_util_process, ir_cmd, config):
+def send_command(flirc_util_process, config, ir_code, repeat):
     """ Send the IR command
         flirc_util_process is a subprocess we already opened by running "flirc_util shell".
         We leave that open so we don't have to spawn a new process for every key press, which
         seems to be noticeably faster on something slow like a Raspberry Pi Zero W
     """
-    interkey_delay = config['flirc_interkey_delay']
-    repeat = config['flirc_ir_repeat']
-    flirc_cmd = "sendir --ik=%s --repeat=%s --pattern=%s\n" % (interkey_delay, repeat, ir_cmd)
+    interkey_delay = config['interkey_delay']
+    flirc_cmd = "sendir --ik=%s --repeat=%s --pattern=%s\n" % (interkey_delay, repeat, ir_code)
 
     logging.debug('flirc_command: %s', flirc_cmd)
     flirc_util_process.stdin.write(str.encode(flirc_cmd))
