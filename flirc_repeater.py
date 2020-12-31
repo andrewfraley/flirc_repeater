@@ -63,7 +63,7 @@ def send_command(flirc_util_process, config, ir_code, repeat):
 
     logging.debug('flirc_command: %s', flirc_cmd)
     flirc_util_process.stdin.write(str.encode(flirc_cmd))
-    # flirc_util_process.stdin.flush()
+    flirc_util_process.stdin.flush()
 
 
 def start_flirc_util(config):
