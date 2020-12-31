@@ -63,7 +63,7 @@ key_mgmt=WPA-PSK
     - You need to specifify the key code, which is what the FLIRC sends as a keyboard press, followed by the ir_code you want to respond with.
     - Note if you've never worked with yaml files, heed the indentation, it matters.
     - The codes 30 and 48 in the example are for the letters a and b, replace with the codes for your keys
-    - Some devices may need repeat: 3, but other devices may see this as three button presses.  Adjust accordingly.
+    - Some devices may need ```repeat: 3```, but other devices may see this as three button presses.  Adjust accordingly.
 
 ### Restart the flirc_repeater service to use your new config
 - Run: ```systemctl restart flirc_repeater```
