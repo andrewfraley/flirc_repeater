@@ -42,11 +42,11 @@ def main():
         for event in input_device.read():
             if event.type == 1 and event.value == 1:
                 key_code = event.code
-                logging.debug('Key code %s', key_code)
+                logging.info('Key code %s', key_code)
 
                 # Do we know about this key? If so, send it.
                 if key_code in key_codes:
-                    logging.debug('Key code %s recognized, sending IR command', key_code)
+                    logging.info('Key code %s recognized, sending IR command', key_code)
                     ir_code = key_codes[key_code]['ir_code']
                     repeat = key_codes[key_code]['repeat']
                     send_command(flirc_util_process, config=config, ir_code=ir_code, repeat=repeat)
@@ -69,7 +69,7 @@ def send_command(flirc_util_process, config, ir_code, repeat):
 def start_flirc_util(config):
     """ Start the "flirc_util shell" process """
     path = config['flirc_util_path']
-    flirc_util_process = Popen([path, 'shell'], stdin=subprocess.PIPE)
+    flirc_util_process = Popen([path, 'shell'], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     return flirc_util_process
 
 
