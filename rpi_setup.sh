@@ -28,13 +28,16 @@ expect <<END
 END
 
 # Get our source
-if [ -d "/opt/flirc_repeater" ]
-then
+if [ -d "/opt/flirc_repeater" ]; then
     echo 'Directory already exists, attempting a git pull instead of a clone'
     cd /opt/flirc_repeater
     git pull
 else
     git clone https://github.com/andrewfraley/flirc_repeater.git /opt/flirc_repeater
+fi
+
+if [ ! -f "/opt/flirc_repeater/config.yaml" ]; then
+    cp /opt/flirc_repeater/config-example.yaml /opt/flirc_repeater/config.yaml
 fi
 
 chown -R pi:pi /opt/flirc_repeater
