@@ -20,7 +20,7 @@ chmod 754 /tmp/flirc_install.sh
 
 expect <<END
     spawn /tmp/flirc_install.sh
-    expect "y/n"
+    expect "Do you want to install the flirc utilities"
     send "y\r"
     expect eof
 END
