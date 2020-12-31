@@ -6,7 +6,7 @@
     We detect the keypress and then send our IR siginal
 """
 # pylint: disable=line-too-long
-
+import os
 import sys
 import subprocess
 import logging
@@ -88,8 +88,14 @@ def get_input_device(config):
 
 
 def get_config():
+    """ Get the config dict from config.yaml """
+
+    # If we're running this as a service or from a different directory, we need to get the config file from
+    # the same dir where the script resides
+    config_path = os.path.dirname(os.path.realpath(__file__)) + '/config.yaml'
+
     yaml = YAML(typ='safe', pure=True)
-    with open(r'config.yaml') as fileh:
+    with open(config_path) as fileh:
         # The FullLoader parameter handles the conversion from YAML
         # scalar values to Python the dictionary format
         config = yaml.load(fileh)

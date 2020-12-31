@@ -36,6 +36,7 @@ else
     git clone https://github.com/andrewfraley/flirc_repeater.git /opt/flirc_repeater
 fi
 
+# Copy config-example.yaml to config.yaml if config.yaml does not already exist
 if [ ! -f "/opt/flirc_repeater/config.yaml" ]; then
     cp /opt/flirc_repeater/config-example.yaml /opt/flirc_repeater/config.yaml
 fi
