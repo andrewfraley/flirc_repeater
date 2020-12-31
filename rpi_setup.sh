@@ -11,8 +11,6 @@ set -e
 # Install dependencies
 echo "Install dependencies"
 apt install -y git expect python3-evdev python3-ruamel.yaml
-pip3 install evdev
-
 
 # Install FLIRC
 echo "Installing FLIRC"
