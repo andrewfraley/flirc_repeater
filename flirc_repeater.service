@@ -3,7 +3,6 @@
 [Unit]
 # Human readable name of the unit
 Description=FLIRC Repeater service
-StartLimitInterval=0
 
 [Service]
 ExecStart=/usr/bin/python3 /opt/flirc_repeater/flirc_repeater.py
@@ -12,8 +11,10 @@ ExecStart=/usr/bin/python3 /opt/flirc_repeater/flirc_repeater.py
 Environment=PYTHONUNBUFFERED=1
 
 # Automatically restart the service if it crashes
-Restart=on-failure
+Restart=always
 RestartSec=10
+StartLimitInterval=0
+StartLimitIntervalSec=0
 
 # Use a dedicated user to run our service
 User=pi
