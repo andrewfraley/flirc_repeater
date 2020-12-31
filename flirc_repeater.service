@@ -1,0 +1,22 @@
+# systemd unit file for the FLIRC Repeater service
+
+[Unit]
+# Human readable name of the unit
+Description=FLIRC Repeater service
+StartLimitInterval=0
+
+[Service]
+ExecStart=/usr/bin/python3 /opt/flirc_repeater/flirc_repeater.py
+
+# Disable Python's buffering of STDOUT and STDERR, so that output from the service shows up immediately in systemd's logs
+Environment=PYTHONUNBUFFERED=1
+
+# Automatically restart the service if it crashes
+Restart=on-failure
+RestartSec=10
+
+# Use a dedicated user to run our service
+User=pi
+
+[Install]
+WantedBy=default.target

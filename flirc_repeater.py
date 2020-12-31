@@ -7,32 +7,13 @@
 """
 # pylint: disable=line-too-long
 
+import sys
 import subprocess
 import logging
 from subprocess import Popen
 from select import select
 from evdev import InputDevice
-
-# The key code is what the flirc sends as the USB input key press
-# If the code is in this dict, send the ir command for it
-# You can get the key codes from the following file, or just look at the program output when the flirc sends a key press
-# https://github.com/torvalds/linux/blob/master/include/uapi/linux/input-event-codes.h
-KEY_CODES = {
-    # Keycode for PageUp - IR code is Vol Up for Topping
-    '104': '0,8980,4429,580,532,557,528,557,532,553,1628,576,527,558,527,558,505,580,1646,531,1672,554,1645,558,1642,558,505,580,1619,584,1619,579,1646,557,527,558,527,558,1645,558,1615,584,531,553,532,553,531,558,1620,579,532,557,1641,558,532,553,532,532,1645,580,1619,585,1619,584,501,584,1641,584',
-
-    # Keycode for PageDown - IR code is vol down for Topping
-    '109': '0,9032,4376,633,448,640,449,636,448,636,1566,636,448,615,470,640,448,636,1561,641,1562,640,1562,640,1574,628,444,640,1561,641,1561,637,1562,641,488,597,448,641,1562,637,1562,641,448,637,1562,641,444,640,449,636,448,641,1563,640,444,641,444,641,1562,640,444,641,1562,641,1558,640,1563,641',
-}
-
-DEBUG = False
-FLIRC_IK = '23000'  # interkey delay
-FLIRC_REPEAT = 3   # How many times to repeat the IR signal
-FLIRC_DEV_PATH = '/dev/input/by-id/usb-flirc.tv_flirc-if01-event-kbd'
-FLIRC_UTIL_PATH = r'flirc_util'
-# FLIRC_UTIL_PATH = r'C:\Program Files (x86)\Flirc\flirc_util.exe'  # In case you need to debug on Windows
-
-FLIRC_CMD = '%s sendir --ik=%s --repeat=%s --pattern=' % (FLIRC_UTIL_PATH, FLIRC_IK, FLIRC_REPEAT)
+from ruamel.yaml import YAML
 
 
 def main():
@@ -41,34 +22,80 @@ def main():
         We'll watch the Flirc's USB input device for keypresses, and if we see one that matches our KEY_CODES dict,
         we'll send the corresponding IR command with the "flirc_util shell" process.
     """
-    init_logger(debug=DEBUG)
-    input_device = InputDevice(FLIRC_DEV_PATH)
-    flirc_util_process = Popen([FLIRC_UTIL_PATH, 'shell'], stdin=subprocess.PIPE)
-    logging.info('made it')
+
+    config = get_config()
+    init_logger(debug=config['debug'])
+
+    # We'll use this to listen to the FLIRC USB input device for key codes
+    input_device = get_input_device(config)
+
+    # Spawn the FLIRC shell process
+    flirc_util_process = start_flirc_util(config)
+    logging.debug('filrc_util shell process opened')
+
+    key_codes = config['key_codes']
+    logging.debug('key_codes: %s', key_codes)
+
     while True:
         # How to read the input from a console connected USB keyboard (the flirc in our case) https://superuser.com/a/562519/659822
         r, w, x = select([input_device], [], [])  # pylint: disable=unused-variable, invalid-name
         for event in input_device.read():
             if event.type == 1 and event.value == 1:
-                key_code = str(event.code)
+                key_code = event.code
                 logging.info('Key code %s', key_code)
 
                 # Do we know about this key? If so, send it.
-                if key_code in KEY_CODES:
+                if key_code in key_codes:
                     logging.info('Key code %s recognized, sending IR command', key_code)
-                    send_command(flirc_util_process, KEY_CODES[key_code])
+                    send_command(flirc_util_process, key_codes[key_code], config)
 
 
-def send_command(flirc_util_process, ir_cmd):
+def send_command(flirc_util_process, ir_cmd, config):
     """ Send the IR command
         flirc_util_process is a subprocess we already opened by running "flirc_util shell".
         We leave that open so we don't have to spawn a new process for every key press, which
         seems to be noticeably faster on something slow like a Raspberry Pi Zero W
     """
-    flirc_cmd = "sendir --ik=%s --repeat=%s --pattern=%s\n" % (FLIRC_IK, FLIRC_REPEAT, ir_cmd)
+    interkey_delay = config['flirc_interkey_delay']
+    repeat = config['flirc_ir_repeat']
+    flirc_cmd = "sendir --ik=%s --repeat=%s --pattern=%s\n" % (interkey_delay, repeat, ir_cmd)
+
     logging.debug('flirc_command: %s', flirc_cmd)
     flirc_util_process.stdin.write(str.encode(flirc_cmd))
     flirc_util_process.stdin.flush()
+
+
+def start_flirc_util(config):
+    """ Start the "flirc_util shell" process """
+    path = config['flirc_util_path']
+    flirc_util_process = Popen([path, 'shell'], stdin=subprocess.PIPE)
+    return flirc_util_process
+
+
+def get_input_device(config):
+    """ Create the InputDevice instance and handle errors """
+
+    dev_path = config['flirc_device_path']
+    logging.debug('get_input_device() dev_path: %s', dev_path)
+    try:
+        input_device = InputDevice(dev_path)
+        return input_device
+    except FileNotFoundError as exception:
+        logging.error('Error opening device path %s', dev_path)
+        logging.error('Error was: %s', exception)
+        logging.error('FLIRC is likely not attached or the device path (FLIRC_DEV_PATH) is wrong')
+        sys.exit(1)
+
+
+def get_config():
+    yaml = YAML(typ='safe', pure=True)
+    with open(r'config.yaml') as fileh:
+        # The FullLoader parameter handles the conversion from YAML
+        # scalar values to Python the dictionary format
+        config = yaml.load(fileh)
+
+    config['debug'] = str(config['debug']).lower() == 'true'
+    return config
 
 
 def init_logger(debug=False):
