@@ -8,8 +8,6 @@
 
 set -e
 
-
-
 # Install dependencies
 echo "Install dependencies"
 apt install -y git expect python3-evdev python3-ruamel.yaml
@@ -48,6 +46,8 @@ systemctl enable flirc_repeater
 
 # Start the service
 systemctl start flirc_repeater
+echo ""
+echo "Install finsihed!"
 echo 'flirc_repeater service started.'
 echo 'To tail the logs, do: journalctl -u flirc_repeater -f'
 echo 'To restart the service do: systemctl restart flirc_service'
