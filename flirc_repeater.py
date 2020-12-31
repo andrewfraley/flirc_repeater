@@ -69,7 +69,7 @@ def send_command(flirc_util_process, config, ir_code, repeat):
 def start_flirc_util(config):
     """ Start the "flirc_util shell" process """
     path = config['flirc_util_path']
-    flirc_util_process = Popen([path, 'shell'], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+    flirc_util_process = Popen([path, 'shell'], stdin=subprocess.PIPE)
     return flirc_util_process
 
 
