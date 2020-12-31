@@ -1,10 +1,10 @@
-# Flirc Repeater
+# FLIRC Repeater
 
 ## Summary
 This is a small program designed to use a [FLIRC device](https://flirc.tv/more/flirc-usb) to watch for specific IR codes, then transmit different IR codes in response.
 
 ## Use Case
-An example use case is LG's Magic Remote, which doesn't have a learning function, but does have support for controlling the volume on external devices it supports.  If your amplifier isn't supported, you can use this with a flirc device to detect the volume up IR commands from the LG remote, and then send the proper IR command to your amplifier.  In the case of an LG remote, and most others as well, you can program the remote to control an arbitrary brand's devices (I successfully used Phillips).  Then setup the FLIRC to learn these button presses and send keyboard key codes.  This program will then watch the FLIRC for the key codes, and send your different IR codes in response.
+An example use case is LG's Magic Remote, which doesn't have a learning function, but does have support for controlling the volume on external devices it supports.  If your amplifier isn't supported, you can use this with a FLIRC device to detect the volume up IR commands from the LG remote, and then send the proper IR command to your amplifier.  In the case of an LG remote, and most others as well, you can program the remote to control an arbitrary brand's devices (I successfully used Phillips).  Then setup the FLIRC to learn these button presses and send keyboard key codes.  This program will then watch the FLIRC for the key codes, and send your different IR codes in response.
 
 ## Setup
 This should work with any Linux machine, but these instructions are specifically for the Raspberry Pi Zero W running Raspberry Pi OS Lite 32-bit.  These instructions also assume you're just going to use SSH to log into the Pi, you don't need to connect it to a monitor.
