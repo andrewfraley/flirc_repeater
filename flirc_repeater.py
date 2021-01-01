@@ -7,6 +7,7 @@
 
     Andy Fraley
     DEC 2020
+    MIT License in LICENSE file
 
     https://github.com/andrewfraley/flirc_repeater
 """
@@ -105,8 +106,6 @@ def get_config():
 
     yaml = YAML(typ='safe', pure=True)
     with open(config_path) as fileh:
-        # The FullLoader parameter handles the conversion from YAML
-        # scalar values to Python the dictionary format
         config = yaml.load(fileh)
 
     config['debug'] = str(config['debug']).lower() == 'true'
