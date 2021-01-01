@@ -4,6 +4,11 @@
 
     This listens for the flirc to receive an IR signal and send its keypress
     We detect the keypress and then send our IR siginal
+
+    Andy Fraley
+    DEC 2020
+
+    https://github.com/andrewfraley/flirc_repeater
 """
 # pylint: disable=line-too-long
 import os
