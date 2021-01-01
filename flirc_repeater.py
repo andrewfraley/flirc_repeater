@@ -10,7 +10,6 @@ import os
 import sys
 import subprocess
 import shlex
-import command
 import logging
 from subprocess import Popen
 from select import select
@@ -19,26 +18,27 @@ from ruamel.yaml import YAML
 
 
 def main():
-    """
+    """ MAIN """
+    config = get_config()
+    init_logger(debug=config['debug'])
+    wait_loop(config)
+    # benchmark_sendir(config, 30)
+
+
+def wait_loop(config):
+    """ Wait for IR commands to come in
         We're going to spawn a "flirc_util shell" process and send it commands when we see the flirc responding to IR.
         We'll watch the Flirc's USB input device for keypresses, and if we see one that matches our KEY_CODES dict,
         we'll send the corresponding IR command with the "flirc_util shell" process.
     """
 
-    config = get_config()
-    init_logger(debug=config['debug'])
-
-    # wait_loop(config)
-    benchmark_sendir(config, 30, 5)
-
-
-def wait_loop(config):
-    """ Wait for IR commands to come in """
-
     # We'll use this to listen to the FLIRC USB input device for key codes
     input_device = get_input_device(config)
     key_codes = config['key_codes']
     logging.debug('key_codes: %s', key_codes)
+
+    flirc_util_process = start_flirc_util(config)
+
     while True:
         # How to read the input from a console connected USB keyboard (the flirc in our case) https://superuser.com/a/562519/659822
         r, w, x = select([input_device], [], [])  # pylint: disable=unused-variable, invalid-name
@@ -52,25 +52,7 @@ def wait_loop(config):
                     logging.info('Key code %s recognized, sending IR command', key_code)
                     ir_code = key_codes[key_code]['ir_code']
                     repeat = key_codes[key_code]['repeat']
-                    send_command_run(config=config, ir_code=ir_code, repeat=repeat)
-
-
-def benchmark_sendir(config, key_code, count=5):
-    key_codes = config['key_codes']
-    import time
-    start = time.time()
-
-    for inter in range(count):
-        # Do we know about this key? If so, send it.
-        if key_code in key_codes:
-            logging.info('Key code %s recognized, sending IR command', key_code)
-            ir_code = key_codes[key_code]['ir_code']
-            repeat = key_codes[key_code]['repeat']
-            send_command_fastp(config=config, ir_code=ir_code, repeat=repeat)
-
-    end = time.time()
-    elapsed = end - start
-    logging.info('Time elapsed: %s', elapsed)
+                    send_command_subprocess(flirc_util_process, config=config, ir_code=ir_code, repeat=repeat)
 
 
 def send_command_subprocess(flirc_util_process, config, ir_code, repeat):
@@ -87,34 +69,10 @@ def send_command_subprocess(flirc_util_process, config, ir_code, repeat):
     flirc_util_process.stdin.flush()
 
 
-def send_command_fastp(config, ir_code, repeat):
-    """ Time elapsed: 4.38 """
-    interkey_delay = config['interkey_delay']
-    flirc_cmd = "sendir --ik=%s --repeat=%s --pattern=%s\n" % (interkey_delay, repeat, ir_code)
-    full_cmd = "%s %s" % (config['flirc_util_path'], flirc_cmd)
-    logging.debug('send_command_fastp() flirc_cmd: %s', full_cmd)
-
-    cmd = shlex.split(full_cmd)
-    p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-    output = p.communicate()
-    print(output[0])
-
-
-def send_command_run(config, ir_code, repeat):
-    """ Time elapsed: 4.33 """
-    interkey_delay = config['interkey_delay']
-    flirc_cmd = "sendir --ik=%s --repeat=%s --pattern=%s\n" % (interkey_delay, repeat, ir_code)
-    full_cmd = "%s %s" % (config['flirc_util_path'], flirc_cmd)
-    logging.debug('send_command_fastp() flirc_cmd: %s', full_cmd)
-
-    cmd = shlex.split(full_cmd)
-    subprocess.run(cmd)
-
-
 def start_flirc_util(config):
     """ Start the "flirc_util shell" process """
     path = config['flirc_util_path']
-    flirc_util_process = Popen([path, 'shell'], stdin=subprocess.PIPE)
+    flirc_util_process = Popen([path, 'shell'], stdin=subprocess.PIPE, shell=False)
     return flirc_util_process
 
 
@@ -160,6 +118,51 @@ def init_logger(debug=False):
         level = logging.INFO
 
     logging.basicConfig(level=level, format=log_format)
+
+
+# Benchmarking
+def benchmark_sendir(config, key_code, count=5):
+    key_codes = config['key_codes']
+    flirc_util_process = start_flirc_util(config)
+
+    import time
+    start = time.time()
+
+    for iterx in range(count):
+        # Do we know about this key? If so, send it.
+        if key_code in key_codes:
+            logging.info('Key code %s recognized, sending IR command', key_code)
+            ir_code = key_codes[key_code]['ir_code']
+            repeat = key_codes[key_code]['repeat']
+            send_command_subprocess(flirc_util_process, config=config, ir_code=ir_code, repeat=repeat)
+
+    end = time.time()
+    elapsed = end - start
+    logging.info('Time elapsed: %s', elapsed)
+
+
+def send_command_fastp(config, ir_code, repeat):
+    """ Time elapsed: 4.38 """
+    interkey_delay = config['interkey_delay']
+    flirc_cmd = "sendir --ik=%s --repeat=%s --pattern=%s\n" % (interkey_delay, repeat, ir_code)
+    full_cmd = "%s %s" % (config['flirc_util_path'], flirc_cmd)
+    logging.debug('send_command_fastp() flirc_cmd: %s', full_cmd)
+
+    cmd = shlex.split(full_cmd)
+    p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+    output = p.communicate()
+    print(output[0])
+
+
+def send_command_run(config, ir_code, repeat):
+    """ Time elapsed: 4.33 """
+    interkey_delay = config['interkey_delay']
+    flirc_cmd = "sendir --ik=%s --repeat=%s --pattern=%s\n" % (interkey_delay, repeat, ir_code)
+    full_cmd = "%s %s" % (config['flirc_util_path'], flirc_cmd)
+    logging.debug('send_command_fastp() flirc_cmd: %s', full_cmd)
+
+    cmd = shlex.split(full_cmd)
+    subprocess.run(cmd)
 
 
 if __name__ == "__main__":
