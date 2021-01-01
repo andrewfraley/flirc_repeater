@@ -71,4 +71,4 @@ key_mgmt=WPA-PSK
 ## Troubleshooting
 
 ### Viewing logs
-- Run: ```journalctl -u flirc_repeater -f```
+- Run: ```journalctl -u flirc_repeater -fa```
